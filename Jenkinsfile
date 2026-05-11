@@ -73,10 +73,17 @@ pipeline {
 
         stage('Build & Deploy') {
             steps {
-                echo '停止旧容器...'
-                sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} down --remove-orphans || true"
-                echo '构建并部署 Docker 服务...'
-                sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} up -d --build --remove-orphans"
+                withCredentials([
+                    string(credentialsId: 'DEEPSEEK_API_KEY', variable: 'DEEPSEEK_API_KEY'),
+                    string(credentialsId: 'DASHSCOPE_API_KEY', variable: 'DASHSCOPE_API_KEY'),
+                    string(credentialsId: 'BAIDU_MCP_API_KEY', variable: 'BAIDU_MCP_API_KEY'),
+                    string(credentialsId: 'LANGCHAIN_API_KEY', variable: 'LANGCHAIN_API_KEY')
+                ]) {
+                    echo '停止旧容器...'
+                    sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} down --remove-orphans || true"
+                    echo '构建并部署 Docker 服务...'
+                    sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} up -d --build --remove-orphans"
+                }
             }
         }
 
