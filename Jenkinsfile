@@ -114,7 +114,7 @@ pipeline {
     post {
         success {
             echo '=========================================='
-            echo "部署成功！ =ᗜω= ${PROJECT_NAME} 已更新"
+            echo "部署成功！ =ᗜωᗜ= ${PROJECT_NAME} 已更新"
             echo "访问地址: ${HEALTH_CHECK_URL}"
             echo '=========================================='
             sh "docker compose -f ${COMPOSE_FILE} ps"
