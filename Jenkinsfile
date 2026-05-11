@@ -10,6 +10,7 @@ pipeline {
     environment {
         PROJECT_NAME = 'malogbot'
         COMPOSE_FILE = 'docker-compose.yml'
+        COMPOSE_PROJECT_NAME = 'malogbot'
         APP_PORT = '5000'
         HEALTH_CHECK_URL = "http://localhost:${APP_PORT}/"
         HEALTH_CHECK_RETRIES = 10
@@ -72,8 +73,10 @@ pipeline {
 
         stage('Build & Deploy') {
             steps {
+                echo '停止旧容器...'
+                sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} down --remove-orphans || true"
                 echo '构建并部署 Docker 服务...'
-                sh "docker compose -f ${COMPOSE_FILE} up -d --build --remove-orphans"
+                sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} up -d --build --remove-orphans"
             }
         }
 
@@ -106,7 +109,7 @@ pipeline {
         stage('Verify') {
             steps {
                 echo '验证部署状态...'
-                sh "docker compose -f ${COMPOSE_FILE} ps"
+                sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} ps"
             }
         }
 
@@ -129,7 +132,7 @@ pipeline {
             echo '=========================================='
             echo '部署失败! (｡í_ì｡) 请检查日志'
             echo '=========================================='
-            sh "docker compose -f ${COMPOSE_FILE} logs --tail=50"
+            sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} logs --tail=50"
         }
     }
 }
