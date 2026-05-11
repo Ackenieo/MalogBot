@@ -38,8 +38,8 @@ pipeline {
                 echo '检查环境依赖...'
                 sh 'docker --version'
                 sh 'docker compose version'
-                sh 'node --version || true'
-                sh 'npm --version || true'
+                sh 'node --version'
+                sh 'npm --version'
             }
         }
 
@@ -47,7 +47,7 @@ pipeline {
             steps {
                 echo '安装前端依赖...'
                 dir('frontend') {
-                    sh 'npm ci --prefer-offline || npm install'
+                    sh 'npm ci --prefer-offline'
                 }
             }
         }
@@ -114,7 +114,7 @@ pipeline {
     post {
         success {
             echo '=========================================='
-            echo "部署成功！ =ᗜωᗜ= ${PROJECT_NAME} 已更新"
+            echo "部署成功！ =ᗜω= ${PROJECT_NAME} 已更新"
             echo "访问地址: ${HEALTH_CHECK_URL}"
             echo '=========================================='
             sh "docker compose -f ${COMPOSE_FILE} ps"
@@ -123,11 +123,11 @@ pipeline {
             echo '=========================================='
             echo '部署失败! (｡í_ì｡) 请检查日志'
             echo '=========================================='
-            sh "docker compose -f ${COMPOSE_FILE} logs --tail=50 || true"
+            sh "docker compose -f ${COMPOSE_FILE} logs --tail=50"
         }
         cleanup {
             echo '清理未使用的镜像...'
-            sh 'docker image prune -f' || true
+            sh 'docker image prune -f'
         }
     }
 }
