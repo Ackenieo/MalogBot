@@ -53,6 +53,10 @@ tasks/
 .env.local
 .env.*.local
 
+# Project specific
+scripts/
+openspec/
+
 # Logs
 *.log
 logs/

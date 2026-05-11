@@ -73,7 +73,7 @@ class SessionStore:
     
     def delete_session(self, session_id: str) -> bool:
         """
-        删除会话及其所有消息
+        删除会话及其所有关联数据
         
         Args:
             session_id: 会话ID
@@ -81,9 +81,20 @@ class SessionStore:
         Returns:
             是否删除成功
         """
+        from sqlalchemy import text
         with db_manager.get_session() as session:
             sess = session.query(Session).filter_by(session_id=session_id).first()
             if sess:
+                # 删除关联数据（外键没有 CASCADE，需要手动清理）
+                # 删除对话日志
+                session.execute(text("DELETE FROM conversation_journals WHERE session_id = :sid"), {'sid': session_id})
+                # 删除上下文归档
+                session.execute(text("DELETE FROM context_archives WHERE session_id = :sid"), {'sid': session_id})
+                # 删除长期记忆
+                session.execute(text("DELETE FROM long_term_memories WHERE session_id = :sid"), {'sid': session_id})
+                # 删除消息（虽然有 cascade，但显式删除更安全）
+                session.execute(text("DELETE FROM messages WHERE session_id = :sid"), {'sid': session_id})
+                # 删除会话
                 session.delete(sess)
                 return True
             return False

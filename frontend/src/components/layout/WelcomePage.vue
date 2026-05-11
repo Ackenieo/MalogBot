@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { Globe, BookOpen, MessageSquare, Send, Clock, Sparkles } from 'lucide-vue-next'
-import {
-  store,
-  webSearchEnabled,
-  knowledgeBases,
-  setWebSearchEnabled,
-  setKnowledgeBaseId,
-  setSessionId,
-  clearMessages,
-  addMessage,
-} from '@/stores'
-import { sessionApi, webSearchApi } from '@/api'
+import { useChatStore } from '@/stores/chat'
+import { useSettingsStore } from '@/stores/settings'
+import { useKnowledgeStore } from '@/stores/knowledge'
+import { sessionApi, webSearchApi, chatApi } from '@/api'
+import { useStream } from '@/composables/useStream'
 import { formatTime, generateId } from '@/utils'
 import type { Session } from '@/types'
+
+const router = useRouter()
+const chatStore = useChatStore()
+const settingsStore = useSettingsStore()
+const knowledgeStore = useKnowledgeStore()
+const { streamEvents, createAbortController, reset } = useStream()
 
 const emit = defineEmits<{
   (e: 'startChat', message: string): void
@@ -21,17 +22,19 @@ const emit = defineEmits<{
 
 const inputText = ref('')
 
+let accumulatedContent = ''
+
 const recentSessions = computed(() => {
-  return store.session.list
+  return chatStore.sessions
     .filter((s) => s.message_count > 0)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 3)
 })
 
 const selectedKnowledgeBase = computed({
-  get: () => store.settings.knowledgeBaseId || '',
+  get: () => settingsStore.knowledgeBaseId || '',
   set: (value: string) => {
-    setKnowledgeBaseId(value || null)
+    settingsStore.setKnowledgeBaseId(value || null)
   },
 })
 
@@ -39,8 +42,128 @@ async function handleSend() {
   const text = inputText.value.trim()
   if (!text) return
   console.log('[WelcomePage] Starting chat with message:', text.substring(0, 50) + '...')
-  emit('startChat', text)
   inputText.value = ''
+  await startNewChat(text)
+}
+
+async function startNewChat(message: string) {
+  try {
+    const data = await sessionApi.create()
+    if (!data.session_id) {
+      console.error('[WelcomePage] Failed to create session')
+      return
+    }
+
+    chatStore.setSessionId(data.session_id)
+    chatStore.clearMessages()
+
+    if (settingsStore.webSearchEnabled) {
+      await webSearchApi.toggle(true)
+    }
+
+    if (settingsStore.knowledgeBaseId) {
+      await sessionApi.setKnowledgeBase(data.session_id, settingsStore.knowledgeBaseId)
+    }
+
+    chatStore.showChatMode()
+
+    chatStore.addMessage({
+      id: generateId(),
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString(),
+    })
+
+    router.push({ name: 'chat-session', params: { sessionId: data.session_id } })
+
+    await sendMessageToLLM(message)
+  } catch (error) {
+    console.error('[WelcomePage] Start chat error:', error)
+  }
+}
+
+async function sendMessageToLLM(content: string) {
+  accumulatedContent = ''
+  const controller = createAbortController()
+  chatStore.setStreaming(true)
+  chatStore.setAbortController(controller)
+
+  try {
+    const response = await chatApi.stream(content, controller.signal)
+    if (!response.ok) {
+      updateLastMessage(`请求失败: ${response.status} ${response.statusText}`)
+      return
+    }
+
+    chatStore.addMessage({
+      id: generateId(),
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+    })
+
+    for await (const event of streamEvents(response)) {
+      if (!chatStore.abortController) break
+      handleStreamEvent(event)
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.name !== 'AbortError') {
+        updateLastMessage(`发生错误: ${error.message}`)
+      }
+    } else {
+      updateLastMessage('发生错误，请重试')
+    }
+  } finally {
+    chatStore.setStreaming(false)
+    chatStore.setAbortController(null)
+    reset()
+  }
+}
+
+function handleStreamEvent(event: { type: string; [key: string]: unknown }) {
+  switch (event.type) {
+    case 'content':
+      if (typeof event.accumulated === 'string') {
+        accumulatedContent = event.accumulated
+        updateLastMessage(accumulatedContent)
+      } else if (typeof event.content === 'string') {
+        accumulatedContent += event.content
+        updateLastMessage(accumulatedContent)
+      }
+      break
+    case 'done':
+      if (typeof event.content === 'string' && event.content) {
+        updateLastMessage(event.content)
+      } else if (accumulatedContent) {
+        updateLastMessage(accumulatedContent)
+      }
+      break
+    case 'error':
+      const errorMsg = (event.content as string) || '发生错误'
+      if (accumulatedContent) {
+        updateLastMessage(accumulatedContent + '\n\n❌ ' + errorMsg)
+      } else {
+        updateLastMessage('❌ ' + errorMsg)
+      }
+      break
+    case 'onboarding_required':
+      if (typeof event.message === 'string') {
+        updateLastMessage(event.message)
+      }
+      chatStore.setOnboardingMode(true)
+      chatStore.setStreaming(false)
+      break
+    default:
+      if (typeof event.content === 'string') {
+        accumulatedContent += event.content
+        updateLastMessage(accumulatedContent)
+      }
+  }
+}
+
+function updateLastMessage(content: string) {
+  chatStore.updateLastMessage(content)
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -51,15 +174,15 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 async function toggleWebSearch() {
-  const newValue = !webSearchEnabled.value
-  setWebSearchEnabled(newValue)
-  if (store.session.currentId) {
+  const newValue = !settingsStore.webSearchEnabled
+  settingsStore.setWebSearchEnabled(newValue)
+  if (chatStore.sessionId) {
     try {
       await webSearchApi.toggle(newValue)
       console.log('[WelcomePage] Web search toggled:', newValue)
     } catch (error) {
       console.error('[WelcomePage] Toggle web search error:', error)
-      setWebSearchEnabled(!newValue)
+      settingsStore.setWebSearchEnabled(!newValue)
     }
   }
 }
@@ -68,12 +191,12 @@ async function handleSelectSession(sessionId: string) {
   try {
     console.log('[WelcomePage] Selecting session:', sessionId)
     await sessionApi.switch(sessionId)
-    setSessionId(sessionId)
-    clearMessages()
+    chatStore.setSessionId(sessionId)
+    chatStore.clearMessages()
     const data = await sessionApi.info(sessionId)
     if (data.messages) {
       data.messages.forEach((msg) => {
-        addMessage({
+        chatStore.addMessage({
           id: generateId(),
           role: msg.role,
           content: msg.content,
@@ -81,7 +204,8 @@ async function handleSelectSession(sessionId: string) {
         })
       })
     }
-    store.session.isWelcomeMode = false
+    chatStore.showChatMode()
+    router.push({ name: 'chat-session', params: { sessionId } })
   } catch (error) {
     console.error('[WelcomePage] Switch session error:', error)
   }
@@ -92,8 +216,7 @@ async function handleDeleteSession(e: Event, sessionId: string) {
   if (!confirm('确定要删除这个对话吗？')) return
   try {
     await sessionApi.delete(sessionId)
-    const data = await sessionApi.list()
-    store.session.list = data.sessions || []
+    await chatStore.loadSessions()
     console.log('[WelcomePage] Session deleted')
   } catch (error) {
     console.error('[WelcomePage] Delete session error:', error)
@@ -165,15 +288,15 @@ function getSessionTitle(session: Session): string {
           <!-- 联网搜索开关 -->
           <button
             class="option-btn"
-            :class="{ 'option-btn-active': webSearchEnabled }"
+            :class="{ 'option-btn-active': settingsStore.webSearchEnabled }"
             @click="toggleWebSearch"
           >
             <Globe class="w-4 h-4" />
             <span>联网搜索</span>
             <label class="toggle">
-              <input type="checkbox" :checked="webSearchEnabled" class="sr-only" @change="toggleWebSearch" />
-              <span class="toggle-track" :class="{ 'toggle-track-on': webSearchEnabled }">
-                <span class="toggle-thumb" :class="{ 'toggle-thumb-on': webSearchEnabled }" />
+              <input type="checkbox" :checked="settingsStore.webSearchEnabled" class="sr-only" @change="toggleWebSearch" />
+              <span class="toggle-track" :class="{ 'toggle-track-on': settingsStore.webSearchEnabled }">
+                <span class="toggle-thumb" :class="{ 'toggle-thumb-on': settingsStore.webSearchEnabled }" />
               </span>
             </label>
           </button>
@@ -183,7 +306,7 @@ function getSessionTitle(session: Session): string {
             <BookOpen class="w-4 h-4" />
             <select v-model="selectedKnowledgeBase" class="kb-select">
               <option value="">不使用知识库</option>
-              <option v-for="kb in knowledgeBases" :key="kb.id" :value="kb.id">
+              <option v-for="kb in knowledgeStore.knowledgeBases" :key="kb.id" :value="kb.id">
                 {{ kb.name }} ({{ kb.document_count }}个文档)
               </option>
             </select>

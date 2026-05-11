@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
-RUN useradd --create-home --shell /bin/bash appuser
+RUN groupadd -r appuser && useradd -r -g appuser --create-home -s /bin/bash appuser
 
 # Set working directory
 WORKDIR /app
@@ -40,11 +40,12 @@ COPY --from=builder /root/.local /home/appuser/.local
 ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Copy application code
-COPY --chown=appuser:appuser . .
+COPY . .
+RUN chown -R appuser:appuser /app
 
 # Create necessary directories
 RUN mkdir -p uploads archives/journals archives/transcripts && \
-    chown -R appuser:appuser uploads archives
+    chown -R appuser:appuser uploads archives /app
 
 # Switch to non-root user
 USER appuser

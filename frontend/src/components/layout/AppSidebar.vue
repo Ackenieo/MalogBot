@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Plus, Plug, BookOpen, Trash2, MessageSquare, Bot } from 'lucide-vue-next'
-import { store, isWelcomeMode } from '@/stores'
+import { useRouter, useRoute } from 'vue-router'
+import { Plus, Plug, BookOpen, Trash2, MessageSquare, Bot, Activity } from 'lucide-vue-next'
+import { useChatStore } from '@/stores/chat'
 import { sessionApi } from '@/api'
 import { formatTime } from '@/utils'
 import type { Session } from '@/types'
+
+const router = useRouter()
+const route = useRoute()
+const chatStore = useChatStore()
 
 const emit = defineEmits<{
   (e: 'newChat'): void
@@ -13,16 +18,22 @@ const emit = defineEmits<{
   (e: 'selectSession', id: string): void
 }>()
 
-const currentSessionId = computed(() => store.session.currentId)
-const sessions = computed(() => store.session.list)
+const currentSessionId = computed(() => chatStore.sessionId)
+const sessions = computed(() => chatStore.sessions)
 
 function handleNewChat() {
-  emit('newChat')
+  chatStore.showWelcomeMode()
+  router.push('/')
 }
 
 async function handleSelectSession(session: Session) {
-  if (session.session_id === currentSessionId.value && !isWelcomeMode.value) return
-  emit('selectSession', session.session_id)
+  if (session.session_id === currentSessionId.value && route.name === 'chat-session') return
+  try {
+    await sessionApi.switch(session.session_id)
+    router.push({ name: 'chat-session', params: { sessionId: session.session_id } })
+  } catch (error) {
+    console.error('[Sidebar] Switch session error:', error)
+  }
 }
 
 async function handleDeleteSession(e: Event, sessionId: string) {
@@ -30,18 +41,12 @@ async function handleDeleteSession(e: Event, sessionId: string) {
   if (!confirm('确定要删除这个对话吗？')) return
   try {
     console.log('[Sidebar] Deleting session:', sessionId)
-    const data = await sessionApi.delete(sessionId)
-    if (data.status === 'ok') {
-      if (sessionId === currentSessionId.value) {
-        store.session.isWelcomeMode = true
-        store.session.currentId = null
-      }
-      const listData = await sessionApi.list()
-      store.session.list = listData.sessions || []
-      console.log('[Sidebar] Session deleted, remaining:', listData.sessions?.length || 0)
-    } else {
-      alert(data.error || '删除失败')
+    await chatStore.deleteSession(sessionId)
+    if (sessionId === currentSessionId.value) {
+      chatStore.showWelcomeMode()
+      router.push('/')
     }
+    console.log('[Sidebar] Session deleted')
   } catch (error) {
     console.error('[Sidebar] Delete session error:', error)
   }
@@ -67,7 +72,7 @@ function getSessionTitle(session: Session): string {
           class="btn-icon"
           title="MCP 服务管理"
           aria-label="MCP 服务管理"
-          @click="emit('openMCP')"
+          @click="router.push('/mcp')"
         >
           <Plug class="w-[18px] h-[18px]" />
         </button>
@@ -75,9 +80,17 @@ function getSessionTitle(session: Session): string {
           class="btn-icon"
           title="知识库管理"
           aria-label="知识库管理"
-          @click="emit('openKnowledge')"
+          @click="router.push('/knowledge')"
         >
           <BookOpen class="w-[18px] h-[18px]" />
+        </button>
+        <button
+          class="btn-icon"
+          title="健康监控"
+          aria-label="健康监控"
+          @click="router.push('/monitoring')"
+        >
+          <Activity class="w-[18px] h-[18px]" />
         </button>
         <button
           class="btn-icon btn-icon-primary"
@@ -112,18 +125,18 @@ function getSessionTitle(session: Session): string {
         :key="session.session_id"
         :class="[
           'session-item',
-          { 'session-item-active': session.session_id === currentSessionId && !isWelcomeMode }
+          { 'session-item-active': session.session_id === currentSessionId && !chatStore.isWelcomeMode }
         ]"
         @click="handleSelectSession(session)"
       >
         <!-- 激活指示器 -->
         <div
-          v-if="session.session_id === currentSessionId && !isWelcomeMode"
+          v-if="session.session_id === currentSessionId && !chatStore.isWelcomeMode"
           class="session-indicator"
         />
 
         <div class="session-info">
-          <div :class="['session-title', { 'text-gray-100': session.session_id === currentSessionId && !isWelcomeMode }]">
+          <div :class="['session-title', { 'text-gray-100': session.session_id === currentSessionId && !chatStore.isWelcomeMode }]">
             {{ getSessionTitle(session) }}
           </div>
           <div class="session-meta">
@@ -132,7 +145,7 @@ function getSessionTitle(session: Session): string {
         </div>
 
         <button
-          :class="['session-delete', { 'opacity-100': session.session_id === currentSessionId && !isWelcomeMode }]"
+          :class="['session-delete', { 'opacity-100': session.session_id === currentSessionId && !chatStore.isWelcomeMode }]"
           title="删除对话"
           aria-label="删除对话"
           @click="(e: Event) => handleDeleteSession(e, session.session_id)"

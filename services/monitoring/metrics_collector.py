@@ -109,6 +109,11 @@ class KnowledgeMetrics:
     """知识库状态指标"""
     timestamp: datetime
     
+    # 文档统计
+    total_documents: int = 0
+    total_chunks: int = 0
+    embedding_coverage: float = 0.0
+    
     # 条目统计
     total_items: int = 0
     user_items: int = 0
@@ -134,6 +139,9 @@ class KnowledgeMetrics:
         """转换为字典"""
         return {
             "timestamp": self.timestamp.isoformat(),
+            "total_documents": self.total_documents,
+            "total_chunks": self.total_chunks,
+            "embedding_coverage": self.embedding_coverage,
             "total_items": self.total_items,
             "user_items": self.user_items,
             "memory_items": self.memory_items,
@@ -564,10 +572,21 @@ def collect_knowledge_metrics(db_session) -> KnowledgeMetrics:
         agent_rule_repo,
         agent_mistake_repo
     )
-    from sqlalchemy import func
+    from sqlalchemy import text
     
     # 收集各类统计
     now = datetime.now()
+    
+    # 文档和分块统计
+    doc_result = db_session.execute(text("SELECT COUNT(*) FROM documents"))
+    total_documents = list(doc_result)[0][0]
+    
+    chunk_result = db_session.execute(text("SELECT COUNT(*) FROM document_chunks"))
+    total_chunks = list(chunk_result)[0][0]
+    
+    chunk_with_embedding = db_session.execute(text("SELECT COUNT(*) FROM document_chunks WHERE embedding IS NOT NULL"))
+    chunks_with_embedding = list(chunk_with_embedding)[0][0]
+    embedding_coverage = (chunks_with_embedding / total_chunks * 100) if total_chunks > 0 else 0.0
     
     # 知识条目统计
     total_items = knowledge_item_repo_enhanced.count(db_session)
@@ -585,9 +604,11 @@ def collect_knowledge_metrics(db_session) -> KnowledgeMetrics:
     # 计算踩坑重复率
     mistake_repeat_rate = repeat_mistakes / agent_mistakes if agent_mistakes > 0 else 0.0
     
-    # 其他统计（简化版本，实际可能需要更复杂的查询）
     metrics = KnowledgeMetrics(
         timestamp=now,
+        total_documents=total_documents,
+        total_chunks=total_chunks,
+        embedding_coverage=embedding_coverage,
         total_items=total_items,
         user_items=user_items,
         memory_items=memory_items,

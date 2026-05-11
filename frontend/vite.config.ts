@@ -18,7 +18,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/sessions': 'http://localhost:5000',
-      '/chat': 'http://localhost:5000',
+      '/chat/stream': 'http://localhost:5000',
       '/stop': 'http://localhost:5000',
       '/confirm': 'http://localhost:5000',
       '/cancel': 'http://localhost:5000',
@@ -27,8 +27,11 @@ export default defineConfig({
       '/web-search': 'http://localhost:5000',
       '/knowledge-bases': 'http://localhost:5000',
       '/documents': 'http://localhost:5000',
-      '/mcp': 'http://localhost:5000',
+      '/mcp/': 'http://localhost:5000',
       '/team': 'http://localhost:5000',
+      '/history': 'http://localhost:5000',
+      '/reset': 'http://localhost:5000',
+      '/monitoring': 'http://localhost:5000',
     }
   },
   build: {
