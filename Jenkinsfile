@@ -3,6 +3,8 @@ pipeline {
 
     options {
         timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '5'))
     }
 
     environment {
@@ -39,15 +41,22 @@ pipeline {
                 sh 'docker --version'
                 sh 'docker compose version'
                 sh 'node --version'
-                sh 'npm --version'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo '安装前端依赖...'
+                echo '安装前端依赖（使用缓存）...'
                 dir('frontend') {
-                    sh 'npm ci --prefer-offline'
+                    sh '''
+                        if [ -d "node_modules" ]; then
+                            echo "使用已有 node_modules，仅更新变更..."
+                            npm install --prefer-offline
+                        else
+                            echo "首次安装依赖..."
+                            npm ci --prefer-offline
+                        fi
+                    '''
                 }
             }
         }
@@ -61,18 +70,10 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Deploy') {
             steps {
-                echo '构建 Docker 镜像...'
-                sh "docker compose -f ${COMPOSE_FILE} build --no-cache"
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo '停止旧容器并部署新服务...'
-                sh "docker compose -f ${COMPOSE_FILE} down --remove-orphans"
-                sh "docker compose -f ${COMPOSE_FILE} up -d"
+                echo '构建并部署 Docker 服务...'
+                sh "docker compose -f ${COMPOSE_FILE} up -d --build --remove-orphans"
             }
         }
 
@@ -106,7 +107,13 @@ pipeline {
             steps {
                 echo '验证部署状态...'
                 sh "docker compose -f ${COMPOSE_FILE} ps"
-                sh "docker ps --filter name=${PROJECT_NAME} --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'"
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                echo '清理悬空镜像...'
+                sh 'docker image prune -f'
             }
         }
     }
@@ -117,17 +124,12 @@ pipeline {
             echo "部署成功！ =ᗜωᗜ= ${PROJECT_NAME} 已更新"
             echo "访问地址: ${HEALTH_CHECK_URL}"
             echo '=========================================='
-            sh "docker compose -f ${COMPOSE_FILE} ps"
         }
         failure {
             echo '=========================================='
             echo '部署失败! (｡í_ì｡) 请检查日志'
             echo '=========================================='
             sh "docker compose -f ${COMPOSE_FILE} logs --tail=50"
-        }
-        cleanup {
-            echo '清理未使用的镜像...'
-            sh 'docker image prune -f'
         }
     }
 }
