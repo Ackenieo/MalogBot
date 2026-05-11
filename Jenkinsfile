@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     environment {
         PROJECT_NAME = 'malogbot'
         COMPOSE_FILE = 'docker-compose.yml'
@@ -18,7 +22,14 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '拉取最新代码...'
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/dev']], 
+                    userRemoteConfigs: [[
+                        credentialsId: '3170ba34-9602-4b4e-a47b-fdb19e85c072',
+                        url: 'git@github.com:Ackenieo/MalogBot.git'
+                    ]]
+                ])
             }
         }
 
@@ -103,14 +114,14 @@ pipeline {
     post {
         success {
             echo '=========================================='
-            echo "部署成功! ${PROJECT_NAME} 已更新"
+            echo "部署成功！ =ᗜωᗜ= ${PROJECT_NAME} 已更新"
             echo "访问地址: ${HEALTH_CHECK_URL}"
             echo '=========================================='
             sh "docker compose -f ${COMPOSE_FILE} ps"
         }
         failure {
             echo '=========================================='
-            echo '部署失败! 请检查日志'
+            echo '部署失败! (｡í_ì｡) 请检查日志'
             echo '=========================================='
             sh "docker compose -f ${COMPOSE_FILE} logs --tail=50 || true"
         }
