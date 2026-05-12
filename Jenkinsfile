@@ -13,7 +13,7 @@ pipeline {
         COMPOSE_PROJECT_NAME = 'malogbot'
         APP_PORT = '5000'
         HEALTH_CHECK_URL = "http://localhost:${APP_PORT}/"
-        HEALTH_CHECK_RETRIES = 10
+        HEALTH_CHECK_RETRIES = 3
         HEALTH_CHECK_INTERVAL = 5
     }
 
@@ -117,7 +117,7 @@ EOF
                     def healthy = false
                     for (int i = 0; i < retries; i++) {
                         try {
-                            sh "curl -f ${HEALTH_CHECK_URL} > /dev/null 2>&1"
+                            sh "docker exec ${COMPOSE_PROJECT_NAME}-app curl -f http://localhost:5000/ > /dev/null 2>&1"
                             healthy = true
                             echo "服务健康检查通过!"
                             break
