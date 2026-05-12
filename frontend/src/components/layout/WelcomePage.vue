@@ -230,123 +230,118 @@ function getSessionTitle(session: Session): string {
 
 <template>
   <div class="welcome-page">
-    <!-- 背景装饰 -->
-    <div class="welcome-bg" aria-hidden="true">
-      <div class="glow glow-purple" />
-      <div class="glow glow-cyan" />
-      <div class="glow glow-emerald" />
-      <div class="grid-pattern" />
-    </div>
+    <!-- 居中容器 -->
+    <div class="center-wrapper">
+      <!-- 主内容区 -->
+      <div class="welcome-content">
+        <!-- Hero 区域 -->
+        <div class="hero">
+          <!-- 标签 -->
+          <div class="hero-badge">
+            <Sparkles class="w-3.5 h-3.5" />
+            <span>AI-Powered Assistant</span>
+          </div>
 
-    <!-- 主内容区 -->
-    <div class="welcome-content">
-      <!-- Hero 区域 -->
-      <div class="hero">
-        <!-- 标签 -->
-        <div class="hero-badge">
-          <Sparkles class="w-3.5 h-3.5" />
-          <span>AI-Powered Assistant</span>
+          <!-- 大标题 -->
+          <h1 class="hero-title">
+            MalogBot
+          </h1>
+
+          <!-- 副标题 -->
+          <p class="hero-subtitle">
+            您的智能助手，随时准备为您解答问题
+          </p>
         </div>
-
-        <!-- 大标题 -->
-        <h1 class="hero-title">
-          MalogBot
-        </h1>
-
-        <!-- 副标题 -->
-        <p class="hero-subtitle">
-          您的智能助手，随时准备为您解答问题
-        </p>
       </div>
-    </div>
 
-    <!-- 底部输入区域 -->
-    <div class="input-section">
-      <div class="input-container">
-        <!-- 输入框 -->
-        <div class="input-wrapper" :class="{ 'input-wrapper-focused': inputText }">
-          <input
-            v-model="inputText"
-            type="text"
-            class="input-field"
-            placeholder="输入您的问题，开始新对话..."
-            autocomplete="off"
-            @keydown="handleKeydown"
-          />
-          <button
-            class="send-btn"
-            :disabled="!inputText.trim()"
-            aria-label="发送消息"
-            @click="handleSend"
-          >
-            <Send class="w-[18px] h-[18px]" />
-          </button>
-        </div>
+      <!-- 底部输入区域 -->
+      <div class="input-section">
+        <div class="input-container">
+          <!-- 输入框 -->
+          <div class="input-wrapper" :class="{ 'input-wrapper-focused': inputText }">
+            <input
+              v-model="inputText"
+              type="text"
+              class="input-field"
+              placeholder="输入您的问题，开始新对话..."
+              autocomplete="off"
+              @keydown="handleKeydown"
+            />
+            <button
+              class="send-btn"
+              :disabled="!inputText.trim()"
+              aria-label="发送消息"
+              @click="handleSend"
+            >
+              <Send class="w-[18px] h-[18px]" />
+            </button>
+          </div>
 
-        <!-- 选项栏 -->
-        <div class="options-bar">
-          <!-- 联网搜索开关 -->
-          <button
-            class="option-btn"
-            :class="{ 'option-btn-active': settingsStore.webSearchEnabled }"
-            @click="toggleWebSearch"
-          >
-            <Globe class="w-4 h-4" />
-            <span>联网搜索</span>
-            <label class="toggle">
-              <input type="checkbox" :checked="settingsStore.webSearchEnabled" class="sr-only" @change="toggleWebSearch" />
-              <span class="toggle-track" :class="{ 'toggle-track-on': settingsStore.webSearchEnabled }">
-                <span class="toggle-thumb" :class="{ 'toggle-thumb-on': settingsStore.webSearchEnabled }" />
-              </span>
-            </label>
-          </button>
+          <!-- 选项栏 -->
+          <div class="options-bar">
+            <!-- 联网搜索开关 -->
+            <button
+              class="option-btn"
+              :class="{ 'option-btn-active': settingsStore.webSearchEnabled }"
+              @click="toggleWebSearch"
+            >
+              <Globe class="w-4 h-4" />
+              <span>联网搜索</span>
+              <label class="toggle">
+                <input type="checkbox" :checked="settingsStore.webSearchEnabled" class="sr-only" @change="toggleWebSearch" />
+                <span class="toggle-track" :class="{ 'toggle-track-on': settingsStore.webSearchEnabled }">
+                  <span class="toggle-thumb" :class="{ 'toggle-thumb-on': settingsStore.webSearchEnabled }" />
+                </span>
+              </label>
+            </button>
 
-          <!-- 知识库选择 -->
-          <div class="option-btn">
-            <BookOpen class="w-4 h-4" />
-            <select v-model="selectedKnowledgeBase" class="kb-select">
-              <option value="">不使用知识库</option>
-              <option v-for="kb in knowledgeStore.knowledgeBases" :key="kb.id" :value="kb.id">
-                {{ kb.name }} ({{ kb.document_count }}个文档)
-              </option>
-            </select>
+            <!-- 知识库选择 -->
+            <div class="option-btn">
+              <BookOpen class="w-4 h-4" />
+              <select v-model="selectedKnowledgeBase" class="kb-select">
+                <option value="">不使用知识库</option>
+                <option v-for="kb in knowledgeStore.knowledgeBases" :key="kb.id" :value="kb.id">
+                  {{ kb.name }} ({{ kb.document_count }}个文档)
+                </option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 历史对话 -->
-      <div v-if="recentSessions.length > 0" class="history-section">
-        <header class="history-header">
-          <Clock class="w-3.5 h-3.5" />
-          <span>历史对话</span>
-        </header>
-        <div class="history-list">
-          <div
-            v-for="session in recentSessions"
-            :key="session.session_id"
-            class="history-item"
-            @click="handleSelectSession(session.session_id)"
-          >
-            <div class="history-icon">
-              <MessageSquare class="w-4 h-4" />
-            </div>
-            <div class="history-info">
-              <div class="history-title">{{ getSessionTitle(session) }}</div>
-              <div class="history-meta">
-                {{ formatTime(new Date(session.updated_at)) }} · {{ session.message_count }} 条消息
-              </div>
-            </div>
-            <button
-              class="history-delete"
-              title="删除"
-              aria-label="删除对话"
-              @click="(e: Event) => handleDeleteSession(e, session.session_id)"
+        <!-- 历史对话 -->
+        <div v-if="recentSessions.length > 0" class="history-section">
+          <header class="history-header">
+            <Clock class="w-3.5 h-3.5" />
+            <span>历史对话</span>
+          </header>
+          <div class="history-list">
+            <div
+              v-for="session in recentSessions"
+              :key="session.session_id"
+              class="history-item"
+              @click="handleSelectSession(session.session_id)"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
+              <div class="history-icon">
+                <MessageSquare class="w-4 h-4" />
+              </div>
+              <div class="history-info">
+                <div class="history-title">{{ getSessionTitle(session) }}</div>
+                <div class="history-meta">
+                  {{ formatTime(new Date(session.updated_at)) }} · {{ session.message_count }} 条消息
+                </div>
+              </div>
+              <button
+                class="history-delete"
+                title="删除"
+                aria-label="删除对话"
+                @click="(e: Event) => handleDeleteSession(e, session.session_id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -356,73 +351,42 @@ function getSessionTitle(session: Session): string {
 
 <style scoped>
 .welcome-page {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background: var(--bg-base);
+  background: transparent;
 }
 
-/* 背景装饰 */
-.welcome-bg {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(140px);
-}
-
-.glow-purple {
-  top: -20%;
-  left: -10%;
-  width: 600px;
-  height: 600px;
-  background: rgba(124, 58, 237, 0.15);
-}
-
-.glow-cyan {
-  top: 30%;
-  right: -15%;
-  width: 500px;
-  height: 500px;
-  background: rgba(6, 182, 212, 0.1);
-}
-
-.glow-emerald {
-  bottom: -20%;
-  left: 30%;
-  width: 450px;
-  height: 450px;
-  background: rgba(16, 185, 129, 0.08);
-}
-
-.grid-pattern {
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 60px 60px;
+/* 居中容器 */
+.center-wrapper {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+  z-index: 10;
+  background: transparent;
 }
 
 /* 主内容 */
 .welcome-content {
   position: relative;
   z-index: 10;
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 32px 24px;
+  overflow: hidden;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Hero */
@@ -449,36 +413,33 @@ function getSessionTitle(session: Session): string {
 }
 
 .hero-title {
+  height: 90px;
+  font-family: "Comic Sans MS", cursive;
+  background-color: transparent;
+  border-width: 0px;
+  border-style: ridge;
+  border-color: #000000;
   font-size: 4rem;
-  font-weight: 700;
+  font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #C4B5FD 0%, #67E8F9 50%, #6EE7B7 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradientShift 6s ease infinite;
-}
-
-@media (min-width: 768px) {
-  .hero-title {
-    font-size: 4.5rem;
-  }
 }
 
 .hero-subtitle {
   font-size: 1.125rem;
   color: var(--text-muted);
   font-weight: 400;
-  max-width: 400px;
+  width: 500px;
   margin: 0 auto;
   line-height: 1.6;
 }
 
 /* 输入区域 */
 .input-section {
+  width: 100%;
+  max-width: 777px;
+  overflow: hidden;
   position: relative;
   z-index: 10;
   padding-bottom: 32px;
@@ -557,7 +518,9 @@ function getSessionTitle(session: Session): string {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-top: 14px;
+  height: auto;
+  margin-top: 35px;
+  margin-bottom: 35px;
 }
 
 .option-btn {

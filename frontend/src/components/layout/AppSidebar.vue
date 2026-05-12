@@ -61,12 +61,6 @@ function getSessionTitle(session: Session): string {
   <aside class="sidebar">
     <!-- 头部 -->
     <header class="sidebar-header">
-      <h1 class="sidebar-title">
-        <div class="sidebar-icon">
-          <MessageSquare class="w-3.5 h-3.5" />
-        </div>
-        对话列表
-      </h1>
       <div class="sidebar-actions">
         <button
           class="btn-icon"
@@ -92,14 +86,6 @@ function getSessionTitle(session: Session): string {
         >
           <Activity class="w-[18px] h-[18px]" />
         </button>
-        <button
-          class="btn-icon btn-icon-primary"
-          title="新建对话"
-          aria-label="新建对话"
-          @click="handleNewChat"
-        >
-          <Plus class="w-[18px] h-[18px]" />
-        </button>
       </div>
     </header>
 
@@ -108,6 +94,23 @@ function getSessionTitle(session: Session): string {
 
     <!-- 会话列表 -->
     <div class="sidebar-content">
+      <h1 class="sidebar-title">
+        <div class="flex items-center gap-2.5">
+          <div class="sidebar-icon">
+            <MessageSquare class="w-3.5 h-3.5" />
+          </div>
+          <span class="text-sm">对话列表</span>
+        </div>
+        <button
+          class="btn-icon btn-icon-primary"
+          title="新建对话"
+          aria-label="新建对话"
+          @click="handleNewChat"
+        >
+          <Plus class="w-[18px] h-[18px]" />
+        </button>
+      </h1>
+      
       <!-- 空状态 -->
       <div v-if="sessions.length === 0" class="empty-state py-12">
         <div class="empty-state-icon">
@@ -182,17 +185,21 @@ function getSessionTitle(session: Session): string {
 }
 
 .sidebar-header {
-  padding: 20px 20px 16px;
+  padding: 20px 20px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: space-evenly;
   align-items: center;
+  height: 50px;
 }
 
 .sidebar-title {
+  width: 255px;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
   color: var(--text-secondary);
@@ -218,6 +225,8 @@ function getSessionTitle(session: Session): string {
   flex: 1;
   overflow-y: auto;
   padding: 12px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 会话项 */
@@ -321,11 +330,13 @@ function getSessionTitle(session: Session): string {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  display: flex;
+  display: block;
   align-items: center;
   justify-content: center;
   color: var(--text-dim);
   transition: all 200ms var(--ease-default);
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .btn-icon:hover {
@@ -340,9 +351,14 @@ function getSessionTitle(session: Session): string {
 
 /* 空状态 */
 .empty-state {
-  padding: 48px 24px;
+  padding: 150px 24px;
   text-align: center;
   color: var(--text-faint);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-state-icon {
