@@ -79,6 +79,26 @@ pipeline {
                     string(credentialsId: 'BAIDU_MCP_API_KEY', variable: 'BAIDU_MCP_API_KEY'),
                     string(credentialsId: 'LANGCHAIN_API_KEY', variable: 'LANGCHAIN_API_KEY')
                 ]) {
+                    echo '生成 .env 文件...'
+                    sh '''
+                        cat > .env << EOF
+SECRET_KEY=${SECRET_KEY:-jenkins-deploy-key}
+FLASK_DEBUG=False
+POSTGRES_USER=malog
+POSTGRES_PASSWORD=malogbot123
+POSTGRES_DB=malogbot
+POSTGRES_PORT=5433
+APP_PORT=5000
+REDIS_PORT=6379
+DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+BAIDU_MCP_API_KEY=${BAIDU_MCP_API_KEY}
+LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+LANGCHAIN_TRACING_V2=false
+WEB_SEARCH_ENABLED=false
+MCP_ENABLED=true
+EOF
+                    '''
                     echo '停止旧容器...'
                     sh "docker compose -f ${COMPOSE_FILE} -p ${COMPOSE_PROJECT_NAME} down --remove-orphans || true"
                     echo '构建并部署 Docker 服务...'
