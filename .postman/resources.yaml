@@ -1,8 +1,0 @@
-# Use this workspace to collaborate
-workspace:
-  id: 2a5ddd52-ed37-4180-883f-502bc2a4c7e6
-
-localResources:
-  specs:
-    - ..\postman\specs\MalogBot API Doc\MalogBot API Doc.yaml
-    - ..\postman\specs\11\11.json
