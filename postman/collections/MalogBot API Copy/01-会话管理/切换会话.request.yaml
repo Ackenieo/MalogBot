@@ -1,0 +1,9 @@
+$kind: http-request
+name: 切换会话
+method: POST
+url: '{{base_url}}/sessions/{{session_id}}/switch'
+description: 切换到指定会话，返回 status, session_id, session_info
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json

@@ -1,0 +1,6 @@
+$kind: http-request
+name: 删除文档
+method: DELETE
+url: '{{base_url}}/documents/{{doc_id}}'
+description: 删除指定文档，返回 status, message
+order: 7000

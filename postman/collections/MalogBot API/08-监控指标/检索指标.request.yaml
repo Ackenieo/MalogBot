@@ -1,0 +1,10 @@
+$kind: http-request
+name: 检索指标
+method: GET
+url: '{{base_url}}/monitoring/retrieval'
+description: 获取检索相关指标，返回 status, retrieval_stats
+order: 2000
+queryParams:
+  - key: hours
+    value: '{{hours}}'
+    description: 查询时间范围（小时），默认 24

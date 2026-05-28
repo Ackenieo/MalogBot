@@ -1,0 +1,16 @@
+$kind: http-request
+name: 创建知识库
+method: POST
+url: '{{base_url}}/knowledge-bases'
+description: 创建新的知识库，返回 status, knowledge_base
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "技术文档库",
+      "description": "存放技术相关文档"
+    }

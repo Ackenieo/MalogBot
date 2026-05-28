@@ -1,0 +1,10 @@
+$kind: http-request
+name: Bootstrap加载指标
+method: GET
+url: '{{base_url}}/monitoring/bootstrap'
+description: 获取 Bootstrap 加载相关指标，返回 status, bootstrap_stats
+order: 1000
+queryParams:
+  - key: hours
+    value: '{{hours}}'
+    description: 查询时间范围（小时），默认 24

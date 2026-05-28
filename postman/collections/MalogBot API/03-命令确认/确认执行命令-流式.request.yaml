@@ -1,0 +1,18 @@
+$kind: http-request
+name: 确认执行命令-流式
+method: POST
+url: '{{base_url}}/confirm/stream'
+description: |-
+  确认执行命令（流式 SSE），返回 SSE 流式数据。
+  每个 chunk 格式为 data: {...}\n\n
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "command": "ls -la",
+      "user_message": "查看当前目录文件"
+    }

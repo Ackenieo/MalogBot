@@ -1,0 +1,9 @@
+$kind: http-request
+name: 继续执行-非流式
+method: POST
+url: '{{base_url}}/continue'
+description: 继续执行上一个任务（非流式），返回 type, output
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json

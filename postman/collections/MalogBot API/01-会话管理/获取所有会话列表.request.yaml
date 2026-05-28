@@ -1,0 +1,6 @@
+$kind: http-request
+name: 获取所有会话列表
+method: GET
+url: '{{base_url}}/sessions'
+description: 获取所有会话列表，返回 sessions 列表和 current_session_id
+order: 1000

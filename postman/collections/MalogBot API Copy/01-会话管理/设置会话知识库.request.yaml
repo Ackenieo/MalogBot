@@ -1,0 +1,15 @@
+$kind: http-request
+name: 设置会话知识库
+method: PUT
+url: '{{base_url}}/sessions/{{session_id}}/knowledge-base'
+description: 为指定会话设置知识库，返回 status, knowledge_base_id, message
+order: 7000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "knowledge_base_id": "{{kb_id}}"
+    }

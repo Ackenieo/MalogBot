@@ -1,0 +1,6 @@
+$kind: http-request
+name: 获取联网搜索状态
+method: GET
+url: '{{base_url}}/web-search/status'
+description: 获取当前会话的联网搜索开关状态，返回 enabled, session_id
+order: 1000

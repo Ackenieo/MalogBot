@@ -1,0 +1,6 @@
+$kind: http-request
+name: 获取会话详情
+method: GET
+url: '{{base_url}}/sessions/{{session_id}}/info'
+description: 获取指定会话详情，返回 session_info, messages
+order: 5000

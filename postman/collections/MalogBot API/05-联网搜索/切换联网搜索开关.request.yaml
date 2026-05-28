@@ -1,0 +1,15 @@
+$kind: http-request
+name: 切换联网搜索开关
+method: POST
+url: '{{base_url}}/web-search/toggle'
+description: 切换当前会话的联网搜索开关，返回 enabled, session_id, message
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "enabled": true
+    }

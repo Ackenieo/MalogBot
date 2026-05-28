@@ -1,0 +1,18 @@
+$kind: http-request
+name: 取消命令执行
+method: POST
+url: '{{base_url}}/cancel'
+description: |-
+  取消命令执行，返回 SSE 流式数据（告知用户已取消）。
+  每个 chunk 格式为 data: {...}\n\n
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "command": "rm -rf /tmp/test",
+      "user_message": "删除临时文件"
+    }

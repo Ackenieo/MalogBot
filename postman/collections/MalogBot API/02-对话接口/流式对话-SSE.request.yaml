@@ -1,0 +1,17 @@
+$kind: http-request
+name: 流式对话-SSE
+method: POST
+url: '{{base_url}}/chat/stream'
+description: |-
+  使用 Server-Sent Events 流式返回对话内容。
+  返回 Content-Type: text/event-stream，每个 chunk 格式为 data: {...}\n\n
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "message": "你好，请介绍一下你自己"
+    }

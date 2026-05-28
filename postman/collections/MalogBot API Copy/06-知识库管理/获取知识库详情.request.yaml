@@ -1,0 +1,6 @@
+$kind: http-request
+name: 获取知识库详情
+method: GET
+url: '{{base_url}}/knowledge-bases/{{kb_id}}'
+description: 获取指定知识库的详情，返回 knowledge_base
+order: 3000

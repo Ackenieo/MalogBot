@@ -1,0 +1,6 @@
+$kind: http-request
+name: 删除知识库
+method: DELETE
+url: '{{base_url}}/knowledge-bases/{{kb_id}}'
+description: 删除指定知识库，返回 status, message
+order: 4000

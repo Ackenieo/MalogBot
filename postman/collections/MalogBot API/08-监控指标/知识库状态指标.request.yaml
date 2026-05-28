@@ -1,0 +1,6 @@
+$kind: http-request
+name: 知识库状态指标
+method: GET
+url: '{{base_url}}/monitoring/knowledge'
+description: 获取知识库状态相关指标，返回 status, knowledge_metrics
+order: 3000
