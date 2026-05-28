@@ -1,9 +1,0 @@
-$kind: http-request
-name: 创建新会话
-method: POST
-url: '{{base_url}}/sessions/new'
-description: 创建新会话，返回 status, session_id, message
-order: 2000
-headers:
-  - key: Content-Type
-    value: application/json

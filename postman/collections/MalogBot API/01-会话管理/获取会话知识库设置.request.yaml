@@ -1,6 +1,0 @@
-$kind: http-request
-name: 获取会话知识库设置
-method: GET
-url: '{{base_url}}/sessions/{{session_id}}/knowledge-base'
-description: 获取指定会话的知识库设置，返回 knowledge_base_id, knowledge_base
-order: 6000

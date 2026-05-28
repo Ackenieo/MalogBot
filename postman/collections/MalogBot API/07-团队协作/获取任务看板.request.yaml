@@ -1,6 +1,0 @@
-$kind: http-request
-name: 获取任务看板
-method: GET
-url: '{{base_url}}/team/task-board'
-description: 获取多 Agent 团队的任务看板信息，返回 status, task_board
-order: 2000

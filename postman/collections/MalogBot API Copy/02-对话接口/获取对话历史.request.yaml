@@ -1,6 +1,0 @@
-$kind: http-request
-name: 获取对话历史
-method: GET
-url: '{{base_url}}/history'
-description: 获取当前会话的对话历史，返回 messages, session_id
-order: 3000

@@ -1,6 +1,0 @@
-$kind: http-request
-name: 删除会话
-method: DELETE
-url: '{{base_url}}/sessions/{{session_id}}'
-description: 删除指定会话，返回 status, message
-order: 3000

@@ -1,6 +1,0 @@
-$kind: http-request
-name: 获取团队执行状态
-method: GET
-url: '{{base_url}}/team/status'
-description: 获取多 Agent 团队的当前执行状态，返回 status, team_status
-order: 1000

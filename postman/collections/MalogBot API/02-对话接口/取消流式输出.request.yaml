@@ -1,9 +1,0 @@
-$kind: http-request
-name: 取消流式输出
-method: POST
-url: '{{base_url}}/stop'
-description: 取消当前正在进行的流式输出，返回 status, message
-order: 5000
-headers:
-  - key: Content-Type
-    value: application/json

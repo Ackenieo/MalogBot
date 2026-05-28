@@ -1,9 +1,0 @@
-$kind: http-request
-name: 重置会话历史
-method: POST
-url: '{{base_url}}/reset'
-description: 重置当前会话的对话历史，返回 status, message
-order: 4000
-headers:
-  - key: Content-Type
-    value: application/json

@@ -1,6 +1,0 @@
-$kind: http-request
-name: Prometheus格式导出
-method: GET
-url: '{{base_url}}/monitoring/prometheus'
-description: 以 Prometheus 文本格式导出所有监控指标，返回 text/plain 格式数据
-order: 5000
